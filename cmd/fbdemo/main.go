@@ -7,28 +7,34 @@ import (
 	flatbuffers "github.com/google/flatbuffers/go"
 )
 
-func MakeUser(name string, id uint64) []byte {
-	b := flatbuffers.NewBuilder(256)
+func MakeData() []byte {
+	builder := flatbuffers.NewBuilder(512)
 
-	// create the name object and get its offset:
-	fbName := b.CreateString(name)
+	acct := users.CreateSimpleAccount(builder,
+		"eth", 123,
+		users.KeyTypeEd25519, []byte("my-crypto-identity"))
+	builder.Finish(acct)
+	return builder.FinishedBytes()
+}
 
-	// write the User object:
-	users.UserStart(b)
-	users.UserAddName(b, fbName)
-	users.UserAddId(b, id)
-	userPosition := users.UserEnd(b)
+func PrintAccount(acct *users.Account) {
+	pk := acct.Pubkey(nil)
+	kind := users.EnumNamesKeyType[int(pk.Type())]
+	fmt.Printf("Account for pubkey %X (%s):\n",
+		pk.KeyBytes(), kind)
 
-	// finish the write operations by our User the root object:
-	b.Finish(userPosition)
-
-	// return the byte slice containing encoded data:
-	return b.FinishedBytes()
+	coin := new(users.Coin)
+	numCoins := acct.CoinsLength()
+	for j := 0; j < numCoins; j++ {
+		acct.Coins(coin, j)
+		fmt.Printf(" %6d %s\n", coin.Amount(), coin.Denom())
+	}
 }
 
 func main() {
-	data := MakeUser("Johnathan Bullwinkle", 1736)
-	user := users.GetRootAsUser(data, 0)
-	fmt.Printf("Read user #%d: %s\n",
-		user.Id(), string(user.Name()))
+	raw := MakeData()
+	fmt.Printf("Encoded data (%d bytes):\n%X\n", len(raw), raw)
+
+	acct := users.GetRootAsAccount(raw, 0)
+	PrintAccount(acct)
 }

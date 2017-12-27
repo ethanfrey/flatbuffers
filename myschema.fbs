@@ -1,8 +1,20 @@
 namespace users;
 
-table User {
-    name:string;
-    id:ulong;
+enum KeyType : byte { Ed25519 = 1, Secp256k1 }
+
+table PubKey {
+    type:KeyType;
+    key:[ubyte];
 }
 
-root_type User;
+table Coin {
+    denom:string;
+    amount:long;
+}
+
+table Account {
+    pubkey:PubKey;
+    coins:[Coin];
+}
+
+root_type Account;
