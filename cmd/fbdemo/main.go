@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
 
 	"github.com/ethanfrey/flatbuffers/users"
@@ -33,8 +34,22 @@ func PrintAccount(acct *users.Account) {
 
 func main() {
 	raw := MakeData()
-	fmt.Printf("Encoded data (%d bytes):\n%X\n", len(raw), raw)
+	orig := make([]byte, len(raw))
+	copy(orig, raw)
+	fmt.Printf("Encoded data (%d bytes):\n%X\n\n", len(raw), raw)
 
 	acct := users.GetRootAsAccount(raw, 0)
 	PrintAccount(acct)
+
+	// let's change the key type
+	// note that modifies raw buffer in-place
+	acct.Pubkey(nil).MutateType(int8(users.KeyTypeSecp256k1))
+
+	fmt.Printf("\nEncoded data (%d bytes):\n%X\n\n", len(raw), raw)
+	if bytes.Equal(orig, raw) {
+		fmt.Println("nothing changed.")
+	}
+
+	acct2 := users.GetRootAsAccount(raw, 0)
+	PrintAccount(acct2)
 }
