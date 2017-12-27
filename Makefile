@@ -3,11 +3,17 @@
 flatc:
 	flatc -g myschema.fbs
 
-# install:
-# 	@go install ./cmd/fbdemo
+install:
+	@ go install ./cmd/fbdemo
 
-# demo: install
-# 	@fbdemo
+demo: install
+	@ fbdemo
+
+deps: glide
+	@ glide install
+
+glide:
+	@ go get github.com/Masterminds/glide
 
 # benchmark:
 # 	cd benchmarks && go test -bench=.
@@ -37,6 +43,6 @@ install-fb-Darwin:
 	brew update
 	brew install flatbuffers
 
-tools: install-fb-$(OS)
+tools: install-fb-$(OS) glide
 	@ which flatc > /dev/null || echo please add flatc to $PATH
 
